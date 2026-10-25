@@ -9,6 +9,8 @@ int main(void)
     int choice;
     int loggedIn = 0;
 
+    loadTransactionsFromFile();
+
     do
     {
         printf("\n");
