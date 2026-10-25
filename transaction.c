@@ -53,6 +53,38 @@ static void addTransactionNode(
     }
 }
 
+void loadTransactionsFromFile(void)
+{
+    FILE *fp;
+
+    Transaction transaction;
+
+    fp = fopen("transactions.txt", "r");
+
+    if(fp == NULL)
+    {
+        return;
+    }
+
+    while(
+        fscanf(
+            fp,
+            "%d|%49[^|]|%49[^|]|%lf|%511[^|]|%64s\n",
+            &transaction.transactionId,
+            transaction.sender,
+            transaction.receiver,
+            &transaction.amount,
+            transaction.cipherText,
+            transaction.integrityHash
+        ) == 6
+    )
+    {
+        addTransactionNode(transaction);
+    }
+
+    fclose(fp);
+}
+
 void createTransaction(void)
 {
     Transaction transaction;
