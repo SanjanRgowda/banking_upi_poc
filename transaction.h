@@ -9,5 +9,6 @@ void createTransaction(void);
 void displayTransactions(void);
 void verifyIntegrity(void);
 void freeTransactionList(void);
+void loadTransactionsFromFile(void);
 
 #endif
