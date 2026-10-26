@@ -1,0 +1,168 @@
+        -:    0:Source:auth.c
+        -:    0:Graph:auth.gcno
+        -:    0:Data:auth.gcda
+        -:    0:Runs:1
+        -:    1:#include <stdio.h>
+        -:    2:#include <string.h>
+        -:    3:#include <stdlib.h>
+        -:    4:
+        -:    5:#include "auth.h"
+        -:    6:#include "crypto.h"
+        -:    7:#include "models.h"
+        -:    8:
+    #####:    9:static void generatePasswordHash(
+        -:   10:    const char *password,
+        -:   11:    const char *salt,
+        -:   12:    char hash[HASH_LENGTH]
+        -:   13:)
+        -:   14:{
+        -:   15:    char combined[128];
+        -:   16:
+    #####:   17:    snprintf(
+        -:   18:        combined,
+        -:   19:        sizeof(combined),
+        -:   20:        "%s%s",
+        -:   21:        salt,
+        -:   22:        password
+        -:   23:    );
+        -:   24:
+    #####:   25:    sha256String(
+        -:   26:        combined,
+        -:   27:        hash
+        -:   28:    );
+    #####:   29:}
+        -:   30:
+    #####:   31:int registerUser(void)
+        -:   32:{
+        -:   33:    User user;
+        -:   34:
+        -:   35:    FILE *fp;
+        -:   36:
+        -:   37:    char password[50];
+        -:   38:
+    #####:   39:    printf("User ID: ");
+    #####:   40:    scanf("%d", &user.userId);
+        -:   41:
+    #####:   42:    printf("Username: ");
+    #####:   43:    scanf("%49s", user.username);
+        -:   44:
+    #####:   45:    printf("Password: ");
+    #####:   46:    scanf("%49s", password);
+        -:   47:
+    #####:   48:    strcpy(user.role, "CUSTOMER");
+        -:   49:
+    #####:   50:    generateSalt(user.salt);
+        -:   51:
+    #####:   52:    generatePasswordHash(
+        -:   53:        password,
+        -:   54:        user.salt,
+        -:   55:        user.passwordHash
+        -:   56:    );
+        -:   57:
+    #####:   58:    fp = fopen(
+        -:   59:        "users.txt",
+        -:   60:        "a"
+        -:   61:    );
+        -:   62:
+    #####:   63:    if(fp == NULL)
+        -:   64:    {
+    #####:   65:        printf("Unable to open users file\n");
+    #####:   66:        return 0;
+        -:   67:    }
+        -:   68:
+    #####:   69:    fprintf(
+        -:   70:        fp,
+        -:   71:        "%d|%s|%s|%s|%s\n",
+        -:   72:        user.userId,
+        -:   73:        user.username,
+        -:   74:        user.salt,
+        -:   75:        user.passwordHash,
+        -:   76:        user.role
+        -:   77:    );
+        -:   78:
+    #####:   79:    fclose(fp);
+        -:   80:
+    #####:   81:    printf("User Registered Successfully\n");
+        -:   82:
+    #####:   83:    return 1;
+        -:   84:}
+        -:   85:
+    #####:   86:int loginUser(void)
+        -:   87:{
+        -:   88:    FILE *fp;
+        -:   89:
+        -:   90:    char username[50];
+        -:   91:    char password[50];
+        -:   92:
+        -:   93:    User user;
+        -:   94:
+        -:   95:    char calculatedHash[HASH_LENGTH];
+        -:   96:
+    #####:   97:    printf("Username: ");
+    #####:   98:    scanf("%49s", username);
+        -:   99:
+    #####:  100:    printf("Password: ");
+    #####:  101:    scanf("%49s", password);
+        -:  102:
+    #####:  103:    fp = fopen(
+        -:  104:        "users.txt",
+        -:  105:        "r"
+        -:  106:    );
+        -:  107:
+    #####:  108:    if(fp == NULL)
+        -:  109:    {
+    #####:  110:        printf("Users Database Missing\n");
+    #####:  111:        return 0;
+        -:  112:    }
+        -:  113:
+    #####:  114:    while(
+    #####:  115:        fscanf(
+        -:  116:            fp,
+        -:  117:            "%d|%49[^|]|%16[^|]|%64[^|]|%19s\n",
+        -:  118:            &user.userId,
+        -:  119:            user.username,
+        -:  120:            user.salt,
+        -:  121:            user.passwordHash,
+        -:  122:            user.role
+    #####:  123:        ) == 5
+        -:  124:    )
+        -:  125:    {
+    #####:  126:        if(
+    #####:  127:            strcmp(
+        -:  128:                username,
+        -:  129:                user.username
+        -:  130:            ) == 0
+        -:  131:        )
+        -:  132:        {
+    #####:  133:            generatePasswordHash(
+        -:  134:                password,
+        -:  135:                user.salt,
+        -:  136:                calculatedHash
+        -:  137:            );
+        -:  138:
+    #####:  139:            if(
+    #####:  140:                strcmp(
+        -:  141:                    calculatedHash,
+        -:  142:                    user.passwordHash
+        -:  143:                ) == 0
+        -:  144:            )
+        -:  145:            {
+    #####:  146:                fclose(fp);
+        -:  147:
+    #####:  148:                printf(
+        -:  149:                    "Login Successful\n"
+        -:  150:                );
+        -:  151:
+    #####:  152:                return 1;
+        -:  153:            }
+        -:  154:        }
+        -:  155:    }
+        -:  156:
+    #####:  157:    fclose(fp);
+        -:  158:
+    #####:  159:    printf(
+        -:  160:        "Invalid Credentials\n"
+        -:  161:    );
+        -:  162:
+    #####:  163:    return 0;
+        -:  164:}

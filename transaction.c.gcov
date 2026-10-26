@@ -1,0 +1,300 @@
+        -:    0:Source:transaction.c
+        -:    0:Graph:transaction.gcno
+        -:    0:Data:transaction.gcda
+        -:    0:Runs:1
+        -:    1:#include <stdio.h>
+        -:    2:#include <stdlib.h>
+        -:    3:#include <string.h>
+        -:    4:
+        -:    5:#include "transaction.h"
+        -:    6:#include "crypto.h"
+        -:    7:
+        -:    8:TransactionNode *head = NULL;
+        -:    9:
+        -:   10:/* AES-128 Key */
+        -:   11:static const unsigned char AES_KEY[16] =
+        -:   12:{
+        -:   13:    'A','E','S','K',
+        -:   14:    'E','Y','1','2',
+        -:   15:    '3','4','5','6',
+        -:   16:    '7','8','9','0'
+        -:   17:};
+        -:   18:
+    #####:   19:static void addTransactionNode(
+        -:   20:    Transaction transaction
+        -:   21:)
+        -:   22:{
+        -:   23:    TransactionNode *newNode;
+        -:   24:
+        -:   25:    newNode =
+    #####:   26:        (TransactionNode*)malloc(
+        -:   27:            sizeof(TransactionNode)
+        -:   28:        );
+        -:   29:
+    #####:   30:    if(newNode == NULL)
+        -:   31:    {
+    #####:   32:        printf("Memory Allocation Failed\n");
+    #####:   33:        return;
+        -:   34:    }
+        -:   35:
+    #####:   36:    newNode->data = transaction;
+    #####:   37:    newNode->next = NULL;
+        -:   38:
+    #####:   39:    if(head == NULL)
+        -:   40:    {
+    #####:   41:        head = newNode;
+        -:   42:    }
+        -:   43:    else
+        -:   44:    {
+    #####:   45:        TransactionNode *temp = head;
+        -:   46:
+    #####:   47:        while(temp->next != NULL)
+        -:   48:        {
+    #####:   49:            temp = temp->next;
+        -:   50:        }
+        -:   51:
+    #####:   52:        temp->next = newNode;
+        -:   53:    }
+        -:   54:}
+        -:   55:
+    #####:   56:void loadTransactionsFromFile(void)
+        -:   57:{
+        -:   58:    FILE *fp;
+        -:   59:
+        -:   60:    Transaction transaction;
+        -:   61:
+    #####:   62:    fp = fopen("transactions.txt", "r");
+        -:   63:
+    #####:   64:    if(fp == NULL)
+        -:   65:    {
+    #####:   66:        return;
+        -:   67:    }
+        -:   68:
+    #####:   69:    while(
+    #####:   70:        fscanf(
+        -:   71:            fp,
+        -:   72:            "%d|%49[^|]|%49[^|]|%lf|%511[^|]|%64s\n",
+        -:   73:            &transaction.transactionId,
+        -:   74:            transaction.sender,
+        -:   75:            transaction.receiver,
+        -:   76:            &transaction.amount,
+        -:   77:            transaction.cipherText,
+        -:   78:            transaction.integrityHash
+    #####:   79:        ) == 6
+        -:   80:    )
+        -:   81:    {
+    #####:   82:        addTransactionNode(transaction);
+        -:   83:    }
+        -:   84:
+    #####:   85:    fclose(fp);
+        -:   86:}
+        -:   87:
+    #####:   88:void createTransaction(void)
+        -:   89:{
+        -:   90:    Transaction transaction;
+        -:   91:
+        -:   92:    FILE *fp;
+        -:   93:
+        -:   94:    char plainData[256];
+        -:   95:
+        -:   96:    unsigned char cipherText[512];
+        -:   97:
+        -:   98:    int cipherLength;
+        -:   99:
+    #####:  100:    printf("Transaction ID: ");
+    #####:  101:    scanf("%d",
+        -:  102:          &transaction.transactionId);
+        -:  103:
+    #####:  104:    printf("Sender: ");
+    #####:  105:    scanf("%49s",
+        -:  106:          transaction.sender);
+        -:  107:
+    #####:  108:    printf("Receiver: ");
+    #####:  109:    scanf("%49s",
+        -:  110:          transaction.receiver);
+        -:  111:
+    #####:  112:    printf("Amount: ");
+    #####:  113:    scanf("%lf",
+        -:  114:          &transaction.amount);
+        -:  115:
+    #####:  116:    snprintf(
+        -:  117:        plainData,
+        -:  118:        sizeof(plainData),
+        -:  119:        "%s|%s|%.2lf",
+        -:  120:        transaction.sender,
+        -:  121:        transaction.receiver,
+        -:  122:        transaction.amount
+        -:  123:    );
+        -:  124:
+        -:  125:    cipherLength =
+    #####:  126:        encryptAES(
+        -:  127:            (unsigned char*)plainData,
+    #####:  128:            strlen(plainData),
+        -:  129:            AES_KEY,
+        -:  130:            cipherText
+        -:  131:        );
+        -:  132:
+    #####:  133:    memset(
+        -:  134:        transaction.cipherText,
+        -:  135:        0,
+        -:  136:        sizeof(transaction.cipherText)
+        -:  137:    );
+        -:  138:
+    #####:  139:    for(int i = 0; i < cipherLength; i++)
+        -:  140:    {
+    #####:  141:        sprintf(
+    #####:  142:            transaction.cipherText + (i * 2),
+        -:  143:            "%02X",
+    #####:  144:            cipherText[i]
+        -:  145:        );
+        -:  146:    }
+        -:  147:
+    #####:  148:    sha256String(
+        -:  149:        plainData,
+        -:  150:        transaction.integrityHash
+        -:  151:    );
+        -:  152:
+    #####:  153:    addTransactionNode(transaction);
+        -:  154:
+    #####:  155:    fp = fopen(
+        -:  156:        "transactions.txt",
+        -:  157:        "a"
+        -:  158:    );
+        -:  159:
+    #####:  160:    if(fp == NULL)
+        -:  161:    {
+    #####:  162:        printf("Transaction File Error\n");
+    #####:  163:        return;
+        -:  164:    }
+        -:  165:
+    #####:  166:    fprintf(
+        -:  167:        fp,
+        -:  168:        "%d|%s|%s|%.2lf|%s|%s\n",
+        -:  169:        transaction.transactionId,
+        -:  170:        transaction.sender,
+        -:  171:        transaction.receiver,
+        -:  172:        transaction.amount,
+        -:  173:        transaction.cipherText,
+        -:  174:        transaction.integrityHash
+        -:  175:    );
+        -:  176:
+    #####:  177:    fclose(fp);
+        -:  178:
+    #####:  179:    printf(
+        -:  180:        "Transaction Created Successfully\n"
+        -:  181:    );
+        -:  182:}
+        -:  183:
+    #####:  184:void displayTransactions(void)
+        -:  185:{
+    #####:  186:    TransactionNode *temp = head;
+        -:  187:
+    #####:  188:    if(temp == NULL)
+        -:  189:    {
+    #####:  190:        printf(
+        -:  191:            "No Transactions Available\n"
+        -:  192:        );
+    #####:  193:        return;
+        -:  194:    }
+        -:  195:
+    #####:  196:    printf(
+        -:  197:        "\n===== TRANSACTIONS =====\n"
+        -:  198:    );
+        -:  199:
+    #####:  200:    while(temp != NULL)
+        -:  201:    {
+    #####:  202:        printf(
+        -:  203:            "\nTransaction ID : %d\n",
+        -:  204:            temp->data.transactionId
+        -:  205:        );
+        -:  206:
+    #####:  207:        printf(
+        -:  208:            "Sender : %s\n",
+    #####:  209:            temp->data.sender
+        -:  210:        );
+        -:  211:
+    #####:  212:        printf(
+        -:  213:            "Receiver : %s\n",
+    #####:  214:            temp->data.receiver
+        -:  215:        );
+        -:  216:
+    #####:  217:        printf(
+        -:  218:            "Amount : %.2lf\n",
+        -:  219:            temp->data.amount
+        -:  220:        );
+        -:  221:
+    #####:  222:        temp = temp->next;
+        -:  223:    }
+        -:  224:}
+        -:  225:
+    #####:  226:void verifyIntegrity(void)
+        -:  227:{
+    #####:  228:    TransactionNode *temp = head;
+        -:  229:
+        -:  230:    char transactionData[256];
+        -:  231:    char generatedHash[HASH_LENGTH];
+        -:  232:
+    #####:  233:    if(temp == NULL)
+        -:  234:    {
+    #####:  235:        printf(
+        -:  236:            "No Transactions Available\n"
+        -:  237:        );
+    #####:  238:        return;
+        -:  239:    }
+        -:  240:
+    #####:  241:    while(temp != NULL)
+        -:  242:    {
+    #####:  243:        snprintf(
+        -:  244:            transactionData,
+        -:  245:            sizeof(transactionData),
+        -:  246:            "%s|%s|%.2lf",
+    #####:  247:            temp->data.sender,
+    #####:  248:            temp->data.receiver,
+        -:  249:            temp->data.amount
+        -:  250:        );
+        -:  251:
+    #####:  252:        sha256String(
+        -:  253:            transactionData,
+        -:  254:            generatedHash
+        -:  255:        );
+        -:  256:
+    #####:  257:        printf(
+        -:  258:            "\nTransaction ID : %d\n",
+        -:  259:            temp->data.transactionId
+        -:  260:        );
+        -:  261:
+    #####:  262:        if(
+    #####:  263:            strcmp(
+        -:  264:                generatedHash,
+    #####:  265:                temp->data.integrityHash
+        -:  266:            ) == 0
+        -:  267:        )
+        -:  268:        {
+    #####:  269:            printf(
+        -:  270:                "Integrity Verified\n"
+        -:  271:            );
+        -:  272:        }
+        -:  273:        else
+        -:  274:        {
+    #####:  275:            printf(
+        -:  276:                "Tampering Detected\n"
+        -:  277:            );
+        -:  278:        }
+        -:  279:
+    #####:  280:        temp = temp->next;
+        -:  281:    }
+        -:  282:}
+        -:  283:
+    #####:  284:void freeTransactionList(void)
+        -:  285:{
+        -:  286:    TransactionNode *temp;
+        -:  287:
+    #####:  288:    while(head != NULL)
+        -:  289:    {
+    #####:  290:        temp = head;
+        -:  291:
+    #####:  292:        head = head->next;
+        -:  293:
+    #####:  294:        free(temp);
+        -:  295:    }
+    #####:  296:}

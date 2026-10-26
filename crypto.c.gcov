@@ -1,0 +1,149 @@
+        -:    0:Source:crypto.c
+        -:    0:Graph:crypto.gcno
+        -:    0:Data:crypto.gcda
+        -:    0:Runs:3
+        -:    1:#include <stdio.h>
+        -:    2:#include <stdlib.h>
+        -:    3:#include <string.h>
+        -:    4:#include <time.h>
+        -:    5:
+        -:    6:#include <openssl/sha.h>
+        -:    7:#include <openssl/evp.h>
+        -:    8:
+        -:    9:#include "crypto.h"
+        -:   10:
+        1:   11:void generateSalt(char *salt)
+        -:   12:{
+        1:   13:    const char charset[] =
+        -:   14:        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        -:   15:        "abcdefghijklmnopqrstuvwxyz"
+        -:   16:        "0123456789";
+        -:   17:
+        1:   18:    int length = 16;
+        -:   19:
+        1:   20:    srand((unsigned int)time(NULL));
+        -:   21:
+       17:   22:    for(int i = 0; i < length; i++)
+        -:   23:    {
+       16:   24:        salt[i] = charset[rand() % 62];
+        -:   25:    }
+        -:   26:
+        1:   27:    salt[length] = '\0';
+        1:   28:}
+        -:   29:
+        8:   30:void sha256String(
+        -:   31:    const char *input,
+        -:   32:    char output[HASH_LENGTH]
+        -:   33:)
+        -:   34:{
+        -:   35:    unsigned char hash[SHA256_DIGEST_LENGTH];
+        -:   36:
+        8:   37:    SHA256(
+        -:   38:        (const unsigned char *)input,
+        -:   39:        strlen(input),
+        -:   40:        hash
+        -:   41:    );
+        -:   42:
+      264:   43:    for(int i = 0; i < SHA256_DIGEST_LENGTH; i++)
+        -:   44:    {
+      256:   45:        sprintf(
+      256:   46:            output + (i * 2),
+        -:   47:            "%02x",
+      256:   48:            hash[i]
+        -:   49:        );
+        -:   50:    }
+        -:   51:
+        8:   52:    output[64] = '\0';
+        8:   53:}
+        -:   54:
+        1:   55:int encryptAES(
+        -:   56:    const unsigned char *plaintext,
+        -:   57:    int plaintextLen,
+        -:   58:    const unsigned char *key,
+        -:   59:    unsigned char *ciphertext
+        -:   60:)
+        -:   61:{
+        -:   62:    EVP_CIPHER_CTX *ctx;
+        -:   63:
+        -:   64:    int len;
+        -:   65:    int cipherLen;
+        -:   66:
+        1:   67:    ctx = EVP_CIPHER_CTX_new();
+        -:   68:
+        1:   69:    EVP_EncryptInit_ex(
+        -:   70:        ctx,
+        -:   71:        EVP_aes_128_ecb(),
+        -:   72:        NULL,
+        -:   73:        key,
+        -:   74:        NULL
+        -:   75:    );
+        -:   76:
+        1:   77:    EVP_EncryptUpdate(
+        -:   78:        ctx,
+        -:   79:        ciphertext,
+        -:   80:        &len,
+        -:   81:        plaintext,
+        -:   82:        plaintextLen
+        -:   83:    );
+        -:   84:
+        1:   85:    cipherLen = len;
+        -:   86:
+        1:   87:    EVP_EncryptFinal_ex(
+        -:   88:        ctx,
+        -:   89:        ciphertext + len,
+        -:   90:        &len
+        -:   91:    );
+        -:   92:
+        1:   93:    cipherLen += len;
+        -:   94:
+        1:   95:    EVP_CIPHER_CTX_free(ctx);
+        -:   96:
+        1:   97:    return cipherLen;
+        -:   98:}
+        -:   99:
+        1:  100:int decryptAES(
+        -:  101:    const unsigned char *ciphertext,
+        -:  102:    int ciphertextLen,
+        -:  103:    const unsigned char *key,
+        -:  104:    unsigned char *plaintext
+        -:  105:)
+        -:  106:{
+        -:  107:    EVP_CIPHER_CTX *ctx;
+        -:  108:
+        -:  109:    int len;
+        -:  110:    int plainLen;
+        -:  111:
+        1:  112:    ctx = EVP_CIPHER_CTX_new();
+        -:  113:
+        1:  114:    EVP_DecryptInit_ex(
+        -:  115:        ctx,
+        -:  116:        EVP_aes_128_ecb(),
+        -:  117:        NULL,
+        -:  118:        key,
+        -:  119:        NULL
+        -:  120:    );
+        -:  121:
+        1:  122:    EVP_DecryptUpdate(
+        -:  123:        ctx,
+        -:  124:        plaintext,
+        -:  125:        &len,
+        -:  126:        ciphertext,
+        -:  127:        ciphertextLen
+        -:  128:    );
+        -:  129:
+        1:  130:    plainLen = len;
+        -:  131:
+        1:  132:    EVP_DecryptFinal_ex(
+        -:  133:        ctx,
+        -:  134:        plaintext + len,
+        -:  135:        &len
+        -:  136:    );
+        -:  137:
+        1:  138:    plainLen += len;
+        -:  139:
+        1:  140:    EVP_CIPHER_CTX_free(ctx);
+        -:  141:
+        1:  142:    plaintext[plainLen] = '\0';
+        -:  143:
+        1:  144:    return plainLen;
+        -:  145:}

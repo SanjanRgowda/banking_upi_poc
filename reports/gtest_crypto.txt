@@ -1,0 +1,15 @@
+Running main() from ./googletest/src/gtest_main.cc
+[==========] Running 3 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 3 tests from CryptoTest
+[ RUN      ] CryptoTest.SaltGeneration
+[       OK ] CryptoTest.SaltGeneration (0 ms)
+[ RUN      ] CryptoTest.SHA256HashGeneration
+[       OK ] CryptoTest.SHA256HashGeneration (1 ms)
+[ RUN      ] CryptoTest.AESEncryptionDecryption
+[       OK ] CryptoTest.AESEncryptionDecryption (0 ms)
+[----------] 3 tests from CryptoTest (1 ms total)
+
+[----------] Global test environment tear-down
+[==========] 3 tests from 1 test suite ran. (1 ms total)
+[  PASSED  ] 3 tests.

@@ -1,0 +1,85 @@
+        -:    0:Source:audit.c
+        -:    0:Graph:audit.gcno
+        -:    0:Data:audit.gcda
+        -:    0:Runs:1
+        -:    1:#include <stdio.h>
+        -:    2:#include <time.h>
+        -:    3:
+        -:    4:#include "audit.h"
+        -:    5:
+        1:    6:void writeAuditLog(
+        -:    7:    const char *event
+        -:    8:)
+        -:    9:{
+        -:   10:    FILE *fp;
+        -:   11:
+        -:   12:    time_t currentTime;
+        -:   13:
+        -:   14:    char *timeString;
+        -:   15:
+        1:   16:    fp = fopen(
+        -:   17:        "audit_log.txt",
+        -:   18:        "a"
+        -:   19:    );
+        -:   20:
+        1:   21:    if(fp == NULL)
+        -:   22:    {
+    #####:   23:        printf(
+        -:   24:            "Unable to Open Audit Log File\n"
+        -:   25:        );
+    #####:   26:        return;
+        -:   27:    }
+        -:   28:
+        1:   29:    currentTime = time(NULL);
+        -:   30:
+        1:   31:    timeString = ctime(&currentTime);
+        -:   32:
+        1:   33:    fprintf(
+        -:   34:        fp,
+        -:   35:        "[%s] %s\n",
+        -:   36:        timeString,
+        -:   37:        event
+        -:   38:    );
+        -:   39:
+        1:   40:    fclose(fp);
+        -:   41:}
+        -:   42:
+    #####:   43:void viewAuditLogs(void)
+        -:   44:{
+        -:   45:    FILE *fp;
+        -:   46:
+        -:   47:    char line[512];
+        -:   48:
+    #####:   49:    fp = fopen(
+        -:   50:        "audit_log.txt",
+        -:   51:        "r"
+        -:   52:    );
+        -:   53:
+    #####:   54:    if(fp == NULL)
+        -:   55:    {
+    #####:   56:        printf(
+        -:   57:            "No Audit Logs Available\n"
+        -:   58:        );
+    #####:   59:        return;
+        -:   60:    }
+        -:   61:
+    #####:   62:    printf(
+        -:   63:        "\n===== AUDIT LOGS =====\n"
+        -:   64:    );
+        -:   65:
+    #####:   66:    while(
+    #####:   67:        fgets(
+        -:   68:            line,
+        -:   69:            sizeof(line),
+        -:   70:            fp
+    #####:   71:        ) != NULL
+        -:   72:    )
+        -:   73:    {
+    #####:   74:        printf(
+        -:   75:            "%s",
+        -:   76:            line
+        -:   77:        );
+        -:   78:    }
+        -:   79:
+    #####:   80:    fclose(fp);
+        -:   81:}

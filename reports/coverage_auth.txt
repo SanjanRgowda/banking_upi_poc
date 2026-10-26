@@ -1,0 +1,5 @@
+File 'auth.c'
+Lines executed:0.00% of 45
+Creating 'auth.c.gcov'
+
+Lines executed:0.00% of 45

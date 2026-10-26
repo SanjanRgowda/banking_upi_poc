@@ -6,7 +6,7 @@
 
 int main(void)
 {
-    int choice;
+    int choice=0;
     int loggedIn = 0;
 
     loadTransactionsFromFile();
@@ -27,7 +27,11 @@ int main(void)
         printf("7. Exit\n");
 
         printf("\nEnter Choice: ");
-        scanf("%d", &choice);
+        if(scanf("%d", &choice) != 1)
+        {
+           printf("Invalid Input\n");
+           break;
+        }
 
         switch(choice)
         {

@@ -1,0 +1,5 @@
+File 'audit.c'
+Lines executed:35.00% of 20
+Creating 'audit.c.gcov'
+
+Lines executed:35.00% of 20
